@@ -147,13 +147,3 @@ Ensure all pipeline components are working correctly using pytest:
 pytest
 ```
 
----
-
-## 💬 Interview talking points (For Hiring Managers)
-If you are reviewing this project for a backend or AI Engineering role, here are the architectural choices built to reflect production-grade expertise:
-*   **How do you handle API failures/Rate limits (429s) with LLMs?**  
-    We implement a Redis-backed `CircuitBreaker`. When failures cross the threshold, downstream calls are short-circuited instantly to prevent API billing waste and system choke.
-*   **Why separate the agents into microservices instead of a single monoprocess?**  
-    Separation allows us to scale services independently (e.g., scaling the ingestion crawling instances without scaling high-memory LLM analysis agents). It also prevents runtime locks when mixing synchronous web-scraping with asynchronous LLM calls.
-*   **How do you trace state across asynchronous agent nodes?**  
-    Each run propagates a trace context ID in the JSON-RPC payload. We hook into Langfuse with matching parent-child span IDs to track execution flows, token usage, and costs from the moment a URL is ingested to when the Slack notification goes out.
