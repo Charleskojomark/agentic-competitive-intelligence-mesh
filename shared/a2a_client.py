@@ -48,7 +48,7 @@ class A2aClient:
             response_json = self.circuit_breaker.execute(execute_call)
             
             # Check for JSON-RPC error response format
-            if "error" in response_json:
+            if response_json.get("error") is not None:
                 error = response_json["error"]
                 logger.error(f"A2A Server returned JSON-RPC error: {error}")
                 raise ValueError(f"JSON-RPC Error: {error.get('message')} (code: {error.get('code')})")
