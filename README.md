@@ -30,13 +30,13 @@ The system is decoupled into isolated, single-responsibility microservices. They
 
 ```mermaid
 flowchart TD
-    subgraph Services Mesh (A2A Protocol)
+    subgraph "Services Mesh (A2A Protocol)"
         Ingestion[Ingestion Agent <br/> FastAPI + LangGraph] -->|JSON-RPC: tasks/send| Analysis[Analysis Agent <br/> FastAPI + CrewAI]
         Analysis -->|JSON-RPC: tasks/send| Reporting[Reporting Agent <br/> FastAPI + LangGraph]
         Reporting -->|JSON-RPC: tasks/send| Alert[Alert Agent <br/> Notification Broker]
     end
     
-    subgraph Core Infrastructure & Observability
+    subgraph "Core Infrastructure & Observability"
         Analysis & Ingestion & Reporting & Alert -->|OpenTelemetry Traces & Cost| Langfuse[Langfuse Observability]
         Analysis & Ingestion & Reporting & Alert -->|State, Logs & Retry DLQ| Postgres[(PostgreSQL Database)]
         Analysis & Ingestion & Reporting & Alert -->|Circuit Breakers & Locks| Redis[(Redis Broker)]
