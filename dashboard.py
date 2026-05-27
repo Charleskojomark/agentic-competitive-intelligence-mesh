@@ -26,13 +26,14 @@ logger = logging.getLogger("SystemDashboard")
 processes: Dict[str, subprocess.Popen] = {}
 processes_lock = threading.Lock()
 
-def start_background_service(name: str, cmd: List[str], env: Dict[str, str]):
+def start_background_service(name: str, cmd: List[str], env: Dict[str, str], cwd: Optional[str] = None):
     """Launch a background process and log its state."""
-    logger.info(f"Starting background service: {name} | Cmd: {' '.join(cmd)}")
+    logger.info(f"Starting background service: {name} | Cwd: {cwd} | Cmd: {' '.join(cmd)}")
     try:
         p = subprocess.Popen(
             cmd,
             env=env,
+            cwd=cwd,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
@@ -62,7 +63,8 @@ async def lifespan(app: FastAPI):
     
     # 2. Build local environment
     env = os.environ.copy()
-    env["PYTHONPATH"] = os.path.dirname(os.path.abspath(__file__))
+    root_dir = os.path.dirname(os.path.abspath(__file__))
+    env["PYTHONPATH"] = root_dir
     env["DATABASE_URL"] = os.getenv("DATABASE_URL", "sqlite:///./agent_tasks.db")
     env["REDIS_URL"] = os.getenv("REDIS_URL", "redis://localhost:6379/0")
     
@@ -82,22 +84,24 @@ async def lifespan(app: FastAPI):
         
     # 4. Start all 4 microservice agents
     agents = {
-        "ingestion-agent": ["uvicorn", "services.ingestion-agent.src.main:app", "--host", "127.0.0.1", "--port", "8001"],
-        "analysis-agent": ["uvicorn", "services.analysis-agent.src.main:app", "--host", "127.0.0.1", "--port", "8002"],
-        "reporting-agent": ["uvicorn", "services.reporting-agent.src.main:app", "--host", "127.0.0.1", "--port", "8003"],
-        "alert-agent": ["uvicorn", "services.alert-agent.src.main:app", "--host", "127.0.0.1", "--port", "8004"]
+        "ingestion-agent": (["uvicorn", "src.main:app", "--host", "127.0.0.1", "--port", "8001"], os.path.join(root_dir, "services", "ingestion-agent")),
+        "analysis-agent": (["uvicorn", "src.main:app", "--host", "127.0.0.1", "--port", "8002"], os.path.join(root_dir, "services", "analysis-agent")),
+        "reporting-agent": (["uvicorn", "src.main:app", "--host", "127.0.0.1", "--port", "8003"], os.path.join(root_dir, "services", "reporting-agent")),
+        "alert-agent": (["uvicorn", "src.main:app", "--host", "127.0.0.1", "--port", "8004"], os.path.join(root_dir, "services", "alert-agent"))
     }
     
-    for name, cmd in agents.items():
+    for name, (cmd, cwd) in agents.items():
         # Set agent-specific URL environments for proper routing
         agent_env = env.copy()
+        # Set PYTHONPATH to include both workspace root (for shared.*) and service directory (for src.*)
+        agent_env["PYTHONPATH"] = f"{root_dir}:{cwd}"
         agent_env["AGENT_URL"] = f"http://localhost:{cmd[-1]}/api/v1/agent"
         agent_env["INGESTION_AGENT_URL"] = "http://localhost:8001/api/v1/agent"
         agent_env["ANALYSIS_AGENT_URL"] = "http://localhost:8002/api/v1/agent"
         agent_env["REPORTING_AGENT_URL"] = "http://localhost:8003/api/v1/agent"
         agent_env["ALERT_AGENT_URL"] = "http://localhost:8004/api/v1/agent"
         
-        start_background_service(name, cmd, agent_env)
+        start_background_service(name, cmd, agent_env, cwd=cwd)
         
     yield
     
