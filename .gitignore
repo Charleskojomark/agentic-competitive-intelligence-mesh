@@ -1,0 +1,62 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+pip-selfcheck.json
+
+# Environment variables (sensitive data)
+.env
+.env.*
+!.env.example
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Testing / Coverage
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.noserc
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+agent_tasks.db
+
+# OS files
+.DS_Store
+Thumbs.db
