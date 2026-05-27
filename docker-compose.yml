@@ -1,0 +1,112 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: agent_postgres
+    environment:
+      POSTGRES_DB: agent_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password123
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: agent_redis
+    ports:
+      - "6379:6379"
+
+  langfuse:
+    image: langfuse/langfuse:2
+    container_name: agent_langfuse
+    environment:
+      - DATABASE_URL=postgresql://postgres:password123@postgres:5432/agent_db
+      - NEXTAUTH_SECRET=mysecret
+      - NEXTAUTH_URL=http://localhost:3000
+      - SALT=mysalt
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+
+  ingestion-agent:
+    build:
+      context: .
+      dockerfile: services/ingestion-agent/Dockerfile
+    container_name: ingestion_agent
+    environment:
+      - DATABASE_URL=postgresql://postgres:password123@postgres:5432/agent_db
+      - REDIS_URL=redis://redis:6379/0
+      - AGENT_URL=http://ingestion-agent:8000/api/v1/agent
+      - LANGFUSE_PUBLIC_KEY=pk-lf-dummy
+      - LANGFUSE_SECRET_KEY=sk-lf-dummy
+      - LANGFUSE_HOST=http://langfuse:3000
+    ports:
+      - "8001:8000"
+    depends_on:
+      - postgres
+      - redis
+      - langfuse
+
+  analysis-agent:
+    build:
+      context: .
+      dockerfile: services/analysis-agent/Dockerfile
+    container_name: analysis_agent
+    environment:
+      - DATABASE_URL=postgresql://postgres:password123@postgres:5432/agent_db
+      - REDIS_URL=redis://redis:6379/0
+      - AGENT_URL=http://analysis-agent:8000/api/v1/agent
+      - LANGFUSE_PUBLIC_KEY=pk-lf-dummy
+      - LANGFUSE_SECRET_KEY=sk-lf-dummy
+      - LANGFUSE_HOST=http://langfuse:3000
+    ports:
+      - "8002:8000"
+    depends_on:
+      - postgres
+      - redis
+      - langfuse
+
+  reporting-agent:
+    build:
+      context: .
+      dockerfile: services/reporting-agent/Dockerfile
+    container_name: reporting_agent
+    environment:
+      - DATABASE_URL=postgresql://postgres:password123@postgres:5432/agent_db
+      - REDIS_URL=redis://redis:6379/0
+      - AGENT_URL=http://reporting-agent:8000/api/v1/agent
+      - LANGFUSE_PUBLIC_KEY=pk-lf-dummy
+      - LANGFUSE_SECRET_KEY=sk-lf-dummy
+      - LANGFUSE_HOST=http://langfuse:3000
+    ports:
+      - "8003:8000"
+    depends_on:
+      - postgres
+      - redis
+      - langfuse
+
+  alert-agent:
+    build:
+      context: .
+      dockerfile: services/alert-agent/Dockerfile
+    container_name: alert_agent
+    environment:
+      - DATABASE_URL=postgresql://postgres:password123@postgres:5432/agent_db
+      - REDIS_URL=redis://redis:6379/0
+      - AGENT_URL=http://alert-agent:8000/api/v1/agent
+      - LANGFUSE_PUBLIC_KEY=pk-lf-dummy
+      - LANGFUSE_SECRET_KEY=sk-lf-dummy
+      - LANGFUSE_HOST=http://langfuse:3000
+    ports:
+      - "8004:8000"
+    depends_on:
+      - postgres
+      - redis
+      - langfuse
+
+volumes:
+  pgdata:
