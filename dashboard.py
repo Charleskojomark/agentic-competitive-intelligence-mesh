@@ -7,7 +7,7 @@ import subprocess
 import threading
 import httpx
 import sqlite3
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, BackgroundTasks, HTTPException, Form
