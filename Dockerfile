@@ -12,15 +12,13 @@ RUN useradd -m -u 1000 user
 
 WORKDIR /app
 
-# Copy dependency configs and install them at the workspace root
-COPY pyproject.toml .
-RUN pip install --no-cache-dir .
-
-# Copy shared library code
+# Copy dependency configs and project files needed for the build
+COPY pyproject.toml README.md /app/
 COPY shared/ /app/shared/
-
-# Copy all agent service folders
 COPY services/ /app/services/
+
+# Install the workspace package and all its dependencies
+RUN pip install --no-cache-dir .
 
 # Copy the unified dashboard orchestrator
 COPY dashboard.py /app/
