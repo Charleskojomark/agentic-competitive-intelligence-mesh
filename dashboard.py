@@ -161,7 +161,7 @@ async def trigger_pipeline(req: RunPipelineRequest):
             resp = await client.post("http://127.0.0.1:8001/api/v1/agent", json=payload, timeout=5.0)
             resp.raise_for_status()
             result = resp.json()
-            if "error" in result:
+            if result.get("error") is not None:
                 raise HTTPException(status_code=500, detail=result["error"]["message"])
             return {"taskId": task_id, "status": "submitted"}
     except Exception as e:
